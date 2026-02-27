@@ -42,13 +42,29 @@ export function DataList({ data, title }: { data: any, title: string }) {
   
   const globalUnit = useNetworkStore(state => state.globalUnit);
   const unit = data.unit || globalUnit;
+  
   const entries = Object.entries(data).filter(([key]) => {
-    if (key === 'id' || key === 'label' || key === 'unit' || key === 'type') return false;
-    if (data.type === 'surgeTank') {
-      if (data.hasShape && key === 'diameter') return false;
-      if (!data.hasShape && key === 'shape') return false;
-      if (key === 'hasShape') return false;
+    if (key === 'id' || key === 'label' || key === 'unit' || key === 'type' || key === 'hasAddedLoss' || key === 'hasShape') return false;
+    
+    // Surge Tank specific filtering
+    if (data.type === 'surgeTank' || data.type_st) {
+      const type_st = data.type_st || 'SIMPLE';
+      
+      // Filter based on tank type
+      if (key === 'initialWaterLevel' && type_st === 'SIMPLE') return false;
+      if ((key === 'riserDiameter' || key === 'riserTop') && type_st !== 'DIFFERENTIAL') return false;
+      
+      // Filter based on flags
+      if (key === 'diameter' && data.hasShape) return false;
+      if (key === 'shape' && !data.hasShape) return false;
+      if ((key === 'cplus' || key === 'cminus') && !data.hasAddedLoss) return false;
     }
+
+    // Flow Boundary specific filtering
+    if (data.type === 'flowBoundary') {
+      if (key === 'schedulePoints') return false;
+    }
+    
     return true;
   });
   
@@ -57,17 +73,35 @@ export function DataList({ data, title }: { data: any, title: string }) {
       elevation: { SI: 'm', FPS: 'ft' },
       tankTop: { SI: 'm', FPS: 'ft' },
       tankBottom: { SI: 'm', FPS: 'ft' },
-      diameter: { SI: 'm', FPS: 'ft' },
+      diameter: { SI: 'm', FPS: 'in' },
+      riserDiameter: { SI: 'm', FPS: 'in' },
       length: { SI: 'm', FPS: 'ft' },
       celerity: { SI: 'm/s', FPS: 'ft/s' },
       flow: { SI: 'm³/s', FPS: 'ft³/s' },
       distance: { SI: 'm', FPS: 'ft' },
       area: { SI: 'm²', FPS: 'ft²' },
       reservoirElevation: { SI: 'm', FPS: 'ft' },
-      d: { SI: 'm', FPS: 'ft' },
+      riserTop: { SI: 'm', FPS: 'ft' },
+      initialWaterLevel: { SI: 'm', FPS: 'ft' },
+      d: { SI: 'm', FPS: 'in' },
       a: { SI: 'm²', FPS: 'ft²' },
     };
     return units[key]?.[unit as 'SI' | 'FPS'] || '';
+  };
+
+  const getLabel = (key: string) => {
+    const labels: Record<string, string> = {
+      type_st: 'Tank Type',
+      initialWaterLevel: 'Initial Water Level (HTANK)',
+      tankTop: 'Top Elevation',
+      tankBottom: 'Bottom Elevation',
+      nodeNumber: 'Node Number',
+      riserDiameter: 'Riser Diameter',
+      riserTop: 'Riser Top Elevation',
+      cplus: 'CPLUS',
+      cminus: 'CMINUS',
+    };
+    return labels[key] || key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1');
   };
   
   return (
@@ -83,9 +117,10 @@ export function DataList({ data, title }: { data: any, title: string }) {
       <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
         {entries.map(([key, value]) => {
           const unitStr = getUnit(key);
+          const label = getLabel(key);
           return (
             <div key={key} className="contents">
-              <span className="text-slate-500 font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+              <span className="text-slate-500 font-medium capitalize">{label}:</span>
               <span className="text-slate-900 font-bold text-right">
                 {key === 'shape' && Array.isArray(value) 
                   ? value.map((v: any, i: number) => `(E:${v.e}, A:${v.a})${i < value.length - 1 ? ', ' : ''}`)
