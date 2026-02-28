@@ -227,7 +227,7 @@ export function generateInpFile(nodes: WhamoNode[], edges: WhamoEdge[], autoDown
       addL(`     CMINUS ${d.cminus || 0}`);
     }
     
-    if (d.numSegments !== undefined) {
+    if (d.numSegments !== undefined && d.includeNumSegments !== false) {
       addL(` NUMSEG ${d.numSegments}`);
     }
     addL('FINISH');

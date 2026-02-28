@@ -626,12 +626,23 @@ export function PropertiesPanel() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="segments">Num Segments</Label>
-                <Input 
-                  id="segments" 
-                  type="number" 
-                  value={element.data?.numSegments || 1} 
-                  onChange={(e) => handleChange('numSegments', e.target.value)} 
-                />
+                <div className="flex items-center gap-2">
+                  <Input 
+                    id="segments" 
+                    type="number" 
+                    className="flex-1"
+                    value={element.data?.numSegments || 1} 
+                    onChange={(e) => handleChange('numSegments', e.target.value)} 
+                  />
+                  <div className="flex items-center gap-2 ml-2">
+                    <Checkbox 
+                      id="includeNumSeg" 
+                      checked={element.data?.includeNumSegments !== false} 
+                      onCheckedChange={(checked) => handleChange('includeNumSegments', !!checked)}
+                    />
+                    <Label htmlFor="includeNumSeg" className="text-xs whitespace-nowrap">Include in .INP</Label>
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center space-x-2 my-2">
