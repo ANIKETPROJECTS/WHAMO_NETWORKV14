@@ -396,21 +396,35 @@ export function Toolbar({ onExport, onSave, onLoad }: { onExport: (fileName?: st
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <Label htmlFor="accutest">ACCUTEST</Label>
-                  <Select 
-                    value={computationalParams.accutest || 'NONE'} 
-                    onValueChange={(v: any) => updateComputationalParams({ accutest: v })}
-                  >
-                    <SelectTrigger id="accutest">
-                      <SelectValue placeholder="Select accuracy mode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="FULL">FULL (High Accuracy)</SelectItem>
-                      <SelectItem value="PARTIAL">PARTIAL (Moderate)</SelectItem>
-                      <SelectItem value="NONE">NONE (No Checking)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="includeAccutest" 
+                      checked={computationalParams.includeAccutest !== false}
+                      onCheckedChange={(checked) => updateComputationalParams({ includeAccutest: !!checked })}
+                    />
+                    <Label htmlFor="includeAccutest" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Include ACCUTEST in .INP
+                    </Label>
+                  </div>
+
+                  <div className="space-y-2 opacity-100 data-[disabled=true]:opacity-50 transition-opacity" data-disabled={computationalParams.includeAccutest === false}>
+                    <Label htmlFor="accutest">ACCUTEST Mode</Label>
+                    <Select 
+                      disabled={computationalParams.includeAccutest === false}
+                      value={computationalParams.accutest || 'NONE'} 
+                      onValueChange={(v: any) => updateComputationalParams({ accutest: v })}
+                    >
+                      <SelectTrigger id="accutest">
+                        <SelectValue placeholder="Select accuracy mode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FULL">FULL (High Accuracy)</SelectItem>
+                        <SelectItem value="PARTIAL">PARTIAL (Moderate)</SelectItem>
+                        <SelectItem value="NONE">NONE (No Checking)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </DialogContent>

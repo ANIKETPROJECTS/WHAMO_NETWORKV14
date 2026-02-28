@@ -374,12 +374,12 @@ export function generateInpFile(nodes: WhamoNode[], edges: WhamoEdge[], autoDown
   addL('C COMPUTATIONAL PARAMETERS');
   addL('CONTROL');
   const cp = state.computationalParams;
-  if (cp.accutest && cp.accutest !== 'NONE') {
-    addL(` ACCUTEST ${cp.accutest}`);
-  }
   cp.stages.forEach(stage => {
     addL(` DTCOMP ${stage.dtcomp} DTOUT ${stage.dtout} TMAX ${stage.tmax}`);
   });
+  if (cp.includeAccutest !== false && cp.accutest && cp.accutest !== 'NONE') {
+    addL(` ACCUTEST ${cp.accutest}`);
+  }
   addL('FINISH');
   addL('');
   addL('C EXECUTION CONTROL');

@@ -71,6 +71,7 @@ export interface TimeStage {
 export interface ComputationalParameters {
   stages: TimeStage[];
   accutest: 'FULL' | 'PARTIAL' | 'NONE';
+  includeAccutest?: boolean;
 }
 
 interface OutputRequest {
@@ -138,6 +139,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       tmax: 500.0,
     }],
     accutest: 'NONE',
+    includeAccutest: true,
   },
   outputRequests: [],
   isLocked: false,
