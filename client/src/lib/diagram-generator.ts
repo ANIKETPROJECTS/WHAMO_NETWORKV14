@@ -46,9 +46,20 @@ export function generateSystemDiagramSVG(nodes: WhamoNode[], edges: WhamoEdge[],
 
   // Assign horizontal positions based on level, and vertical based on index in level
   const posMap: Record<string, {x: number, y: number}> = {};
+  let maxNodesInLevel = 0;
+  Object.entries(levelsMap).forEach(([lvlStr, nodeIds]) => {
+    maxNodesInLevel = Math.max(maxNodesInLevel, nodeIds.length);
+  });
+
+  const numLevels = Object.keys(levelsMap).length;
+  const svgWidth = Math.max(1300, (numLevels + 1) * spacingX);
+  const svgHeight = Math.max(750, (maxNodesInLevel + 1) * spacingY);
+
   Object.entries(levelsMap).forEach(([lvlStr, nodeIds]) => {
     const lvl = parseInt(lvlStr);
-    const startY = (750 - (nodeIds.length - 1) * spacingY) / 2;
+    const levelHeight = nodeIds.length * spacingY;
+    const startY = (svgHeight - levelHeight) / 2 + spacingY / 2;
+    
     nodeIds.forEach((id, idx) => {
       posMap[id] = {
         x: 80 + lvl * spacingX,
@@ -56,9 +67,6 @@ export function generateSystemDiagramSVG(nodes: WhamoNode[], edges: WhamoEdge[],
       };
     });
   });
-
-  const svgWidth = Math.max(1300, (Object.keys(levelsMap).length + 1) * spacingX);
-  const svgHeight = 750;
 
   const findNode = (id: string) => nodes.find(n => n.id === id);
 
