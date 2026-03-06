@@ -4,14 +4,18 @@ export interface ValidationError {
   id: string;
   message: string;
   type: 'error' | 'warning';
+  elementLabel?: string;
+  elementType?: string;
 }
 
 export function validateNetwork(nodes: WhamoNode[], edges: WhamoEdge[]): { errors: ValidationError[], warnings: ValidationError[] } {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
 
-  const addError = (id: string, message: string) => errors.push({ id, message, type: 'error' });
-  const addWarning = (id: string, message: string) => warnings.push({ id, message, type: 'warning' });
+  const addError = (id: string, message: string, elementLabel?: string, elementType?: string) => 
+    errors.push({ id, message, type: 'error', elementLabel, elementType });
+  const addWarning = (id: string, message: string, elementLabel?: string, elementType?: string) => 
+    warnings.push({ id, message, type: 'warning', elementLabel, elementType });
 
   // 1. General Network Rules
   const reservoirs = nodes.filter(n => n.type === 'reservoir');
@@ -26,9 +30,9 @@ export function validateNetwork(nodes: WhamoNode[], edges: WhamoEdge[]): { error
     idCounts.set(label, (idCounts.get(label) || 0) + 1);
   });
   nodes.forEach(n => {
-    if (n.type !== 'node' && n.type !== 'junction') { // Based on rules, only pipes can have duplicates, but specifically non-pipe elements must be unique
+    if (n.type !== 'node' && n.type !== 'junction') { 
       if ((idCounts.get(n.data.label) || 0) > 1) {
-        addError(n.id, `Duplicate ID detected: ${n.type} ${n.data.label} appears multiple times.`);
+        addError(n.id, `Duplicate ID detected: ${n.type} ${n.data.label} appears multiple times.`, n.data.label, n.type);
       }
     }
   });
@@ -45,7 +49,7 @@ export function validateNetwork(nodes: WhamoNode[], edges: WhamoEdge[]): { error
   nodes.forEach(n => {
     const connections = adjacency.get(n.id) || [];
     if (connections.length === 0) {
-      addError(n.id, `${n.data.label || n.id} is not connected to the network.`);
+      addError(n.id, `${n.data.label || n.id} is not connected to the network.`, n.data.label, n.type);
     }
   });
 
@@ -69,7 +73,7 @@ export function validateNetwork(nodes: WhamoNode[], edges: WhamoEdge[]): { error
     
     nodes.forEach(n => {
       if (!visited.has(n.id)) {
-        addError(n.id, `${n.data.label || n.id} is not reachable from the reservoir.`);
+        addError(n.id, `${n.data.label || n.id} is not reachable from the reservoir.`, n.data.label, n.type);
       }
     });
   }
@@ -81,35 +85,35 @@ export function validateNetwork(nodes: WhamoNode[], edges: WhamoEdge[]): { error
 
     if (n.type === 'reservoir') {
       if (connections.length !== 1) {
-        addError(n.id, `Reservoir ${d.label} must connect to exactly one pipe.`);
+        addError(n.id, `Reservoir ${d.label} must connect to exactly one pipe.`, d.label, n.type);
       }
       if (d.reservoirElevation === undefined || d.reservoirElevation === '') {
-        addError(n.id, `Reservoir ${d.label} missing elevation value.`);
+        addError(n.id, `Reservoir ${d.label} missing elevation value.`, d.label, n.type);
       }
     }
 
     if (n.type === 'surgeTank') {
       if (connections.length !== 1) {
-        addError(n.id, `Surge Tank ${d.label} must connect to exactly one node.`);
+        addError(n.id, `Surge Tank ${d.label} must connect to exactly one node.`, d.label, n.type);
       }
       if (d.tankTop === undefined || d.tankBottom === undefined || d.tankTop === '' || d.tankBottom === '') {
-        addError(n.id, `Surge Tank ${d.label} missing required elevation parameters.`);
+        addError(n.id, `Surge Tank ${d.label} missing required elevation parameters.`, d.label, n.type);
       } else if (Number(d.tankTop) <= Number(d.tankBottom)) {
-        addError(n.id, `Surge Tank ${d.label} Top Elevation must be greater than Bottom Elevation.`);
+        addError(n.id, `Surge Tank ${d.label} Top Elevation must be greater than Bottom Elevation.`, d.label, n.type);
       }
       if (!d.hasShape && (d.diameter === undefined || d.diameter === '')) {
-        addError(n.id, `Surge Tank ${d.label} missing Diameter.`);
+        addError(n.id, `Surge Tank ${d.label} missing Diameter.`, d.label, n.type);
       }
-      if (d.celerity === undefined || d.celerity === '') addError(n.id, `Surge Tank ${d.label} missing Celerity.`);
-      if (d.friction === undefined || d.friction === '') addError(n.id, `Surge Tank ${d.label} missing Friction.`);
+      if (d.celerity === undefined || d.celerity === '') addError(n.id, `Surge Tank ${d.label} missing Celerity.`, d.label, n.type);
+      if (d.friction === undefined || d.friction === '') addError(n.id, `Surge Tank ${d.label} missing Friction.`, d.label, n.type);
     }
 
     if (n.type === 'flowBoundary') {
       if (connections.length !== 1) {
-        addError(n.id, `Flow Boundary ${d.label} must connect to exactly one node.`);
+        addError(n.id, `Flow Boundary ${d.label} must connect to exactly one node.`, d.label, n.type);
       }
       if (d.scheduleNumber === undefined) {
-        addError(n.id, `Flow Boundary ${d.label} missing Q-Schedule.`);
+        addError(n.id, `Flow Boundary ${d.label} missing Q-Schedule.`, d.label, n.type);
       }
     }
 
@@ -119,7 +123,7 @@ export function validateNetwork(nodes: WhamoNode[], edges: WhamoEdge[]): { error
         adjacency.get(other.id)?.includes(n.id)
       );
       if (connections.length < 2 && !isBoundary) {
-        addWarning(n.id, `Node ${d.label} has fewer than 2 connections and is not a boundary.`);
+        addWarning(n.id, `Node ${d.label} has fewer than 2 connections and is not a boundary.`, d.label, n.type);
       }
     }
   });
@@ -127,13 +131,13 @@ export function validateNetwork(nodes: WhamoNode[], edges: WhamoEdge[]): { error
   edges.forEach(e => {
     const d = e.data;
     if (d?.type === 'conduit') {
-      if (d.length === undefined || d.length === '') addError(e.id, `Conduit ${d.label} missing required parameter: Length`);
-      if (!d.variable && (d.diameter === undefined || d.diameter === '')) addError(e.id, `Conduit ${d.label} missing required parameter: Diameter`);
-      if (d.celerity === undefined || d.celerity === '') addError(e.id, `Conduit ${d.label} missing required parameter: Celerity`);
-      if (d.friction === undefined || d.friction === '') addError(e.id, `Conduit ${d.label} missing required parameter: Friction`);
+      if (d.length === undefined || d.length === '') addError(e.id, `Conduit ${d.label} missing required parameter: Length`, d.label, d.type);
+      if (!d.variable && (d.diameter === undefined || d.diameter === '')) addError(e.id, `Conduit ${d.label} missing required parameter: Diameter`, d.label, d.type);
+      if (d.celerity === undefined || d.celerity === '') addError(e.id, `Conduit ${d.label} missing required parameter: Celerity`, d.label, d.type);
+      if (d.friction === undefined || d.friction === '') addError(e.id, `Conduit ${d.label} missing required parameter: Friction`, d.label, d.type);
 
-      if (Number(d.length) < 1) addWarning(e.id, `Pipe ${d.label} has very short length detected.`);
-      if (Number(d.friction) > 0.1) addWarning(e.id, `Pipe ${d.label} friction value unusually high.`);
+      if (Number(d.length) < 1) addWarning(e.id, `Pipe ${d.label} has very short length detected.`, d.label, d.type);
+      if (Number(d.friction) > 0.1) addWarning(e.id, `Pipe ${d.label} friction value unusually high.`, d.label, d.type);
     }
   });
 
