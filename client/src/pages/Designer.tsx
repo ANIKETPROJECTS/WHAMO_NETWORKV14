@@ -26,6 +26,7 @@ import { useNetworkStore, WhamoNode, WhamoEdge } from '@/lib/store';
 import { ReservoirNode, SimpleNode, JunctionNode, SurgeTankNode, FlowBoundaryNode } from '@/components/NetworkNode';
 import { ConnectionEdge } from '@/components/ConnectionEdge';
 import { PropertiesPanel } from '@/components/PropertiesPanel';
+import { NodeSelectionPanel } from '@/components/NodeSelectionPanel';
 import { Header } from '@/components/Header';
 import { generateInpFile } from '@/lib/inp-generator';
 import { generateSystemDiagram } from '@/lib/diagram-generator';
@@ -78,6 +79,16 @@ function DesignerInner() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const [validationData, setValidationData] = useState<{ errors: ValidationError[], warnings: ValidationError[] } | null>(null);
+  const [showNodeSelection, setShowNodeSelection] = useState(false);
+
+  useEffect(() => {
+    const handleToggleNodeSelection = () => {
+      setShowNodeSelection(prev => !prev);
+    };
+    
+    window.addEventListener('toggleNodeSelection', handleToggleNodeSelection);
+    return () => window.removeEventListener('toggleNodeSelection', handleToggleNodeSelection);
+  }, []);
 
   // We connect local ReactFlow state to our global Zustand store for properties panel sync
   const { 
@@ -99,7 +110,8 @@ function DesignerInner() {
     toggleLock,
     undo,
     redo,
-    loadedFileHandle
+    loadedFileHandle,
+    setAllNodesSelected
   } = useNetworkStore();
 
   const handleSave = async () => {
@@ -599,15 +611,27 @@ function DesignerInner() {
                 )}
               </div>
 
+              {/* Node Selection Panel (Sidebar) */}
+              <div 
+                className={cn(
+                  "h-full border-l border-border bg-card shadow-2xl z-20 flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
+                  showNodeSelection ? "w-[350px] opacity-100 visible" : "w-0 opacity-0 invisible"
+                )}
+              >
+                <div className="w-[350px] h-full">
+                  {showNodeSelection && <NodeSelectionPanel />}
+                </div>
+              </div>
+
               {/* Properties Panel (Sidebar) */}
               <div 
                 className={cn(
                   "h-full border-l border-border bg-card shadow-2xl z-20 flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
-                  selectedElementId ? "w-[350px] opacity-100 visible" : "w-0 opacity-0 invisible"
+                  selectedElementId && !showNodeSelection ? "w-[350px] opacity-100 visible" : "w-0 opacity-0 invisible"
                 )}
               >
                 <div className="w-[350px] h-full">
-                  {selectedElementId && <PropertiesPanel />}
+                  {selectedElementId && !showNodeSelection && <PropertiesPanel />}
                 </div>
               </div>
             </div>

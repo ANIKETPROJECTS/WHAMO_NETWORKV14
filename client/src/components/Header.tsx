@@ -29,6 +29,7 @@ import {
   ListVideo,
   Info,
   ExternalLink,
+  CheckSquare,
 } from "lucide-react";
 import {
   Menubar,
@@ -556,6 +557,13 @@ export function Header({
                 >
                   <ExternalLink className="w-4 h-4" /> Generate external .out
                   file
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem onClick={() => {
+                  const event = new CustomEvent('toggleNodeSelection');
+                  window.dispatchEvent(event);
+                }} className="gap-2">
+                  <CheckSquare className="w-4 h-4" /> Node Selection
                 </MenubarItem>
                 <MenubarSeparator />
                 <Dialog>

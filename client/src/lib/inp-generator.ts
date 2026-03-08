@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver';
 export function generateInpFile(nodes: WhamoNode[], edges: WhamoEdge[], autoDownload: boolean | string = true) {
   const state = useNetworkStore.getState();
   const globalUnit = state.globalUnit;
+  const nodeSelectionSet = state.nodeSelectionSet;
   const lines: string[] = [];
 
   const SI_TO_FPS = {
@@ -172,9 +173,12 @@ export function generateInpFile(nodes: WhamoNode[], edges: WhamoEdge[], autoDown
   sortedNodeIds.forEach(id => {
     const node = nodes.find(n => (n.data.nodeNumber?.toString() || n.id) === id);
     if (node && node.data.elevation !== undefined) {
-      const unit = node.data.unit || globalUnit;
-      const elev = toFPS(Number(node.data.elevation), unit, 'elevation');
-      addL(`NODE ${id} ELEV ${elev}`);
+      const isSelected = nodeSelectionSet.size === 0 || nodeSelectionSet.has(id);
+      if (isSelected) {
+        const unit = node.data.unit || globalUnit;
+        const elev = toFPS(Number(node.data.elevation), unit, 'elevation');
+        addL(`NODE ${id} ELEV ${elev}`);
+      }
     }
   });
 

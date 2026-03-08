@@ -97,6 +97,7 @@ interface NetworkState {
   projectNameError: string | null;
   loadedFileHandle: FileSystemFileHandle | null;
   globalUnit: UnitSystem;
+  nodeSelectionSet: Set<string>;
   history: {
     past: Partial<NetworkState>[];
     future: Partial<NetworkState>[];
@@ -124,6 +125,8 @@ interface NetworkState {
   setGlobalUnit: (unit: UnitSystem) => void;
   updateHSchedule: (number: number, points: { time: number; head: number | string }[]) => void;
   addHSchedule: (number: number) => void;
+  toggleNodeSelection: (nodeId: string) => void;
+  setAllNodesSelected: (selected: boolean) => void;
   undo: () => void;
   redo: () => void;
   saveToHistory: () => void;
@@ -153,6 +156,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   projectNameError: null,
   loadedFileHandle: null,
   globalUnit: 'FPS',
+  nodeSelectionSet: new Set(),
   history: {
     past: [],
     future: [],
@@ -598,6 +602,25 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     const { hSchedules } = get();
     if (!hSchedules.find(s => s.number === number)) {
       set({ hSchedules: [...hSchedules, { number, points: [] }] });
+    }
+  },
+
+  toggleNodeSelection: (nodeId: string) => {
+    const newSet = new Set(get().nodeSelectionSet);
+    if (newSet.has(nodeId)) {
+      newSet.delete(nodeId);
+    } else {
+      newSet.add(nodeId);
+    }
+    set({ nodeSelectionSet: newSet });
+  },
+
+  setAllNodesSelected: (selected: boolean) => {
+    if (selected) {
+      const nodeIds = new Set(get().nodes.map(n => (n.data.nodeNumber?.toString() || n.id)));
+      set({ nodeSelectionSet: nodeIds });
+    } else {
+      set({ nodeSelectionSet: new Set() });
     }
   },
 
