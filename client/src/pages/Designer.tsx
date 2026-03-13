@@ -235,12 +235,9 @@ function DesignerInner() {
           target: newNode.id,
           targetHandle,
         });
-
-        // Auto-select the new node so properties panel opens
-        selectElement(newNode.id, 'node');
       }
     },
-    [isLocked, screenToFlowPosition, addNode, storeOnConnect, selectElement]
+    [isLocked, screenToFlowPosition, addNode, storeOnConnect]
   );
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
