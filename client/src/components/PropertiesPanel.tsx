@@ -828,15 +828,13 @@ export function PropertiesPanel() {
                     value={element.data?.friction || 0} 
                     onChange={(e) => {
                       handleChange('friction', e.target.value);
-                      if ((element.data?.frictionMode || 'direct') === 'manning') {
-                        const f = parseFloat(e.target.value);
-                        const diamFt = currentUnit === 'SI'
-                          ? (parseFloat(element.data?.diameter) || 0) * 3.28084
-                          : (parseFloat(element.data?.diameter) || 0);
-                        if (!isNaN(f) && f > 0 && diamFt > 0) {
-                          const n = Math.sqrt((f * Math.pow(diamFt, 1 / 3)) / 185);
-                          handleChange('manningsN', parseFloat(n.toFixed(6)).toString());
-                        }
+                      const f = parseFloat(e.target.value);
+                      const diamFt = currentUnit === 'SI'
+                        ? (parseFloat(element.data?.diameter) || 0) * 3.28084
+                        : (parseFloat(element.data?.diameter) || 0);
+                      if (!isNaN(f) && f > 0 && diamFt > 0) {
+                        const n = Math.sqrt((f * Math.pow(diamFt, 1 / 3)) / 185);
+                        handleChange('manningsN', parseFloat(n.toFixed(6)).toString());
                       }
                     }}
                   />
@@ -844,66 +842,50 @@ export function PropertiesPanel() {
               </div>
 
               <div className="space-y-3 rounded-md border border-dashed p-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="use-mannings"
-                    data-testid="friction-mode-manning"
-                    checked={(element.data?.frictionMode || 'direct') === 'manning'}
-                    onCheckedChange={(checked) => {
-                      handleChange('frictionMode', checked ? 'manning' : 'direct');
-                      if (checked) {
-                        const f = parseFloat(element.data?.friction) || 0;
+                <div className="space-y-2">
+                  <Label htmlFor="mannings-n">Manning's Coefficient (n)</Label>
+                  <Input
+                    id="mannings-n"
+                    data-testid="input-mannings-n"
+                    type="number"
+                    step="0.0001"
+                    placeholder="e.g. 0.013"
+                    value={(() => {
+                      if (element.data?.manningsN != null && element.data.manningsN !== '') {
+                        return element.data.manningsN;
+                      }
+                      const f = parseFloat(element.data?.friction) || 0;
+                      const diamFt = currentUnit === 'SI'
+                        ? (parseFloat(element.data?.diameter) || 0) * 3.28084
+                        : (parseFloat(element.data?.diameter) || 0);
+                      if (f > 0 && diamFt > 0) {
+                        return parseFloat(Math.sqrt((f * Math.pow(diamFt, 1 / 3)) / 185).toFixed(6));
+                      }
+                      return '';
+                    })()}
+                    onChange={(e) => {
+                      const n = parseFloat(e.target.value);
+                      handleChange('manningsN', e.target.value);
+                      if (!isNaN(n) && n > 0) {
                         const diamFt = currentUnit === 'SI'
                           ? (parseFloat(element.data?.diameter) || 0) * 3.28084
                           : (parseFloat(element.data?.diameter) || 0);
-                        if (f > 0 && diamFt > 0) {
-                          const n = Math.sqrt((f * Math.pow(diamFt, 1 / 3)) / 185);
-                          handleChange('manningsN', parseFloat(n.toFixed(6)).toString());
+                        if (diamFt > 0) {
+                          const f = (185 * n * n) / Math.pow(diamFt, 1 / 3);
+                          handleChange('friction', parseFloat(f.toFixed(6)).toString());
                         }
                       }
                     }}
                   />
-                  <Label htmlFor="use-mannings" className="cursor-pointer font-medium">
-                    Calculate friction from Manning's n
-                  </Label>
                 </div>
-
-                {(element.data?.frictionMode || 'direct') === 'manning' && (
-                  <div className="space-y-3 pt-1">
-                    <div className="space-y-2">
-                      <Label htmlFor="mannings-n">Manning's Coefficient (n)</Label>
-                      <Input
-                        id="mannings-n"
-                        data-testid="input-mannings-n"
-                        type="number"
-                        step="0.0001"
-                        placeholder="e.g. 0.013"
-                        value={element.data?.manningsN ?? ''}
-                        onChange={(e) => {
-                          const n = parseFloat(e.target.value);
-                          handleChange('manningsN', e.target.value);
-                          if (!isNaN(n) && n > 0) {
-                            const diamFt = currentUnit === 'SI'
-                              ? (parseFloat(element.data?.diameter) || 0) * 3.28084
-                              : (parseFloat(element.data?.diameter) || 0);
-                            if (diamFt > 0) {
-                              const f = (185 * n * n) / Math.pow(diamFt, 1 / 3);
-                              handleChange('friction', parseFloat(f.toFixed(6)).toString());
-                            }
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="rounded bg-muted px-3 py-2 text-sm text-muted-foreground">
-                      <span>f = 185 · n² / D<sup>1/3</sup></span>
-                      {element.data?.manningsN && element.data?.friction ? (
-                        <span className="ml-2 font-semibold text-foreground">
-                          = {parseFloat(Number(element.data.friction).toFixed(6))}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                )}
+                <div className="rounded bg-muted px-3 py-2 text-sm text-muted-foreground">
+                  <span>f = 185 · n² / D<sup>1/3</sup></span>
+                  {element.data?.friction ? (
+                    <span className="ml-2 font-semibold text-foreground">
+                      = {parseFloat(Number(element.data.friction).toFixed(6))}
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="segments">Num Segments</Label>
