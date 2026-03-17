@@ -865,10 +865,21 @@ export function PropertiesPanel() {
               </div>
 
               <div className="space-y-3 rounded-md border border-dashed p-3">
-                <Label className="font-medium">Calculate Wave Speed from Pipe Properties</Label>
+                <div>
+                  <Label className="font-medium">Pipe Wall Properties (E &amp; WT)</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Enter <strong>E</strong> to calculate WT, or enter <strong>WT</strong> to calculate E.
+                    Wave speed and diameter are used automatically.
+                  </p>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="pipe-e">Modulus of Elasticity (E, psi)</Label>
+                    <Label htmlFor="pipe-e">
+                      Modulus of Elasticity (E, psi)
+                      {element.data?.pipeWT && !element.data?.pipeE
+                        ? <span className="ml-1 text-xs text-primary">← auto</span>
+                        : null}
+                    </Label>
                     <Input
                       id="pipe-e"
                       data-testid="input-pipe-e"
@@ -905,7 +916,12 @@ export function PropertiesPanel() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pipe-wt">Wall Thickness (WT, {currentUnit === 'SI' ? 'm' : 'ft'})</Label>
+                    <Label htmlFor="pipe-wt">
+                      Wall Thickness (WT, {currentUnit === 'SI' ? 'm' : 'ft'})
+                      {element.data?.pipeE && !element.data?.pipeWT
+                        ? <span className="ml-1 text-xs text-primary">← auto</span>
+                        : null}
+                    </Label>
                     <Input
                       id="pipe-wt"
                       data-testid="input-pipe-wt"
